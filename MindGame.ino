@@ -10,33 +10,42 @@ int buttonRedValue = 0;
 int buttonGreenValue = 0;
 int buttonYellowValue = 0;
 
-char mission[] = "RRYNNNNNNNNN";
+char mission[] = "RRYNNNNNNNNNNNNN";
 int answerStep = 0;
 char currentAnswer = 'I';
+int level = 1;
 
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
+  randomSeed(analogRead(A0));
   pinMode(BUTTON_RED, INPUT);
   pinMode(BUTTON_GREEN, INPUT);
   pinMode(BUTTON_YELLOW, INPUT);
   pinMode(LED_RED, OUTPUT);
   pinMode(LED_GREEN, OUTPUT);
   pinMode(LED_YELLOW, OUTPUT);
+  regenerateMission();
 }
 
 void buzz(int freq) {
   tone(BUZZER, freq, 200);
 }
 
-int getSizeOfMission() {
-  int sizeOfMission = 0;
-  while (mission[sizeOfMission] != 'N' && sizeOfMission < sizeof(mission) - 1) {
-    Serial.println(mission[sizeOfMission]);
-    sizeOfMission++;
+void regenerateMission() {
+  for (int i = 0; i < sizeof(mission) - 1 && i < level + 2; i++) {
+    int colorNum = random(1, 4);
+    Serial.println(colorNum);
+    if (colorNum == 1) {
+      mission[i] = 'R';
+    }
+    if (colorNum == 2) {
+      mission[i] = 'G';
+    }
+    if (colorNum == 3) {
+      mission[i] = 'Y';
+    }
   }
-  Serial.println(sizeOfMission);
-  return sizeOfMission;
 }
 
 void runMission() {
@@ -105,6 +114,7 @@ void resetTheGame() {
 }
 
 void wrongBuzzer() {
+  delay(400);
   tone(BUZZER, 100);
   delay(300);
   noTone(BUZZER);
@@ -115,6 +125,7 @@ void wrongBuzzer() {
 }
 
 void correctBuzzer() {
+  delay(400);
   tone(BUZZER, 5000);
   delay(200);
   noTone(BUZZER);
@@ -131,11 +142,14 @@ void correctBuzzer() {
 void wrongAnswer() {
   wrongBuzzer();
   resetTheGame();
+  mission[3] = 'N';
 }
 
 void correctAnswer() {
   correctBuzzer();
+  regenerateMission();
   resetTheGame();
+  level++;
 }
 
 void loop() {
@@ -162,11 +176,11 @@ void loop() {
     currentAnswer = 'R';
   } else if (buttonGreenValue == 1) {
     digitalWrite(LED_GREEN, HIGH);
-    buzz(2000);
+    buzz(3000);
     currentAnswer = 'G';
   } else if (buttonYellowValue == 1) {
     digitalWrite(LED_YELLOW, HIGH);
-    buzz(3000);
+    buzz(2000);
     currentAnswer = 'Y';
   } else {
     currentAnswer = 'I';
@@ -174,7 +188,6 @@ void loop() {
 
   if (currentAnswer == mission[answerStep]) {
     Serial.println("Correct Answer");
-    Serial.println(answerStep);
     Serial.println(sizeof(mission));
     if (sizeof(mission) == answerStep + 2 || mission[answerStep + 1] == 'N') {
       Serial.println("You have done it");
@@ -185,10 +198,8 @@ void loop() {
   } else if (currentAnswer != 'I') {
     Serial.println("Wrong Answer");
     wrongAnswer();
-    resetTheGame();
   }
 
 
-  Serial.println(currentAnswer);
   delay(200);
 }
